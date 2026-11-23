@@ -1,7 +1,13 @@
 """Metrics shared by holdout evaluation and live monitoring."""
 
 import numpy as np
-from sklearn.metrics import precision_score, recall_score, roc_auc_score
+from sklearn.metrics import (
+    confusion_matrix,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+)
 
 SCORE_BINS = np.linspace(0, 1, 11)
 
@@ -23,4 +29,24 @@ def classification_metrics(actual, probabilities, predictions) -> dict:
         "precision": float(precision_score(actual, predictions, zero_division=0)),
         "recall": float(recall_score(actual, predictions, zero_division=0)),
         "roc_auc": float(roc_auc_score(actual, probabilities)),
+    }
+
+
+def cutoff_metrics(actual, predictions, fp_cost: float, fn_cost: float) -> dict:
+    tn, fp, fn, tp = (int(value) for value in confusion_matrix(
+        actual, predictions, labels=[0, 1]
+    ).ravel())
+    total_cost = fp * fp_cost + fn * fn_cost
+    return {
+        "customers": tn + fp + fn + tp,
+        "churners": tp + fn,
+        "flagged": tp + fp,
+        "precision": float(precision_score(actual, predictions, zero_division=0)),
+        "recall": float(recall_score(actual, predictions, zero_division=0)) if tp + fn else None,
+        "f1": float(f1_score(actual, predictions, zero_division=0)),
+        "confusion_matrix": {
+            "true_negatives": tn, "false_positives": fp,
+            "false_negatives": fn, "true_positives": tp,
+        },
+        "business_cost": {"total": total_cost, "per_customer": total_cost / (tn + fp + fn + tp)},
     }
