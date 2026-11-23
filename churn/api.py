@@ -10,7 +10,7 @@ from flask import Flask, abort, jsonify, request
 from werkzeug.exceptions import HTTPException
 
 from churn.explain import ChurnExplainer
-from churn.features import RAW_FEATURES, validate_customer
+from churn.features import RAW_FEATURES, feature_source_hash, validate_customer
 from churn.monitor import init_log, log_prediction, monitoring_report, record_outcome
 
 
@@ -25,6 +25,8 @@ def create_app() -> Flask:
     artifact = joblib.load(model_path)
     pipeline = artifact["pipeline"]
     report = artifact["report"]
+    if report.get("artifact_metadata", {}).get("features_sha256") != feature_source_hash():
+        raise RuntimeError("Model preprocessing differs from this code. Run python -m churn.train.")
     model_version = report["model_version"]
     threshold = report["decision_threshold"]
     explainer = ChurnExplainer(pipeline)
