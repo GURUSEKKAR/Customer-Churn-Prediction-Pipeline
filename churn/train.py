@@ -1,4 +1,4 @@
-"""Compare three classifiers and export the Gradient Boosting pipeline."""
+"""Compare three classifiers and refit the Gradient Boosting deployment model."""
 
 import argparse
 import hashlib
@@ -10,6 +10,7 @@ from uuid import uuid4
 
 import joblib
 import pandas as pd
+from sklearn.base import clone
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import make_scorer, precision_score, recall_score
@@ -176,6 +177,9 @@ def train(
     chosen_holdout = threshold_comparison[policy]["holdout"]
     baseline = score_summary(boosting_scores, chosen_predictions)
 
+    print(f"Refitting {DEFAULT_MODEL} on all {len(targets):,} customers...", flush=True)
+    final_pipeline = clone(development_model).fit(features, targets)
+
     report = {
         "selected_model": DEFAULT_MODEL,
         "cross_validation_leader": cv_leader,
@@ -194,6 +198,7 @@ def train(
             "churn_rate": float(targets.mean()),
             "train_rows": len(y_train),
             "holdout_rows": len(y_test),
+            "final_fit_rows": len(targets),
         },
         "random_seed": SEED,
         "cross_validation_folds": FOLDS,
@@ -203,6 +208,7 @@ def train(
         "threshold_comparison": threshold_comparison,
         "monitoring_baseline": {
             **baseline,
+            "model_fit": "development_split",
             "score_bin_edges": SCORE_BINS.tolist(),
             "performance": {
                 "precision": chosen_holdout["precision"],
@@ -216,7 +222,7 @@ def train(
     with tempfile.TemporaryDirectory(dir=output_dir) as staging:
         staged_model = Path(staging) / "churn_model.joblib"
         staged_report = Path(staging) / "metrics.json"
-        joblib.dump({"pipeline": development_model, "report": report}, staged_model)
+        joblib.dump({"pipeline": final_pipeline, "report": report}, staged_model, compress=3)
         staged_report.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
         staged_model.replace(output_dir / staged_model.name)
         staged_report.replace(output_dir / staged_report.name)
