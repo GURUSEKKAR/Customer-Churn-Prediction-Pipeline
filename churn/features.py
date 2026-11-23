@@ -85,8 +85,14 @@ def engineer_features(records: pd.DataFrame) -> pd.DataFrame:
         text = features[field].astype("string").str.strip().replace("", pd.NA)
         features[field] = text.astype(object).where(text.notna(), np.nan)
 
-    tenure = features["tenure"].where(features["tenure"] > 0)
-    features["AverageChargesToDate"] = features["TotalCharges"] / tenure
+    zero_tenure = features["tenure"].eq(0)
+    features.loc[zero_tenure & features["TotalCharges"].isna(), "TotalCharges"] = 0
+    historical_average = features["TotalCharges"] / features["tenure"].where(
+        features["tenure"] > 0
+    )
+    features["AverageChargesToDate"] = historical_average.where(
+        ~zero_tenure, features["MonthlyCharges"]
+    )
     add_ons = features.loc[:, list(INTERNET_ADD_ONS)]
     features["InternetAddOnCount"] = add_ons.eq("Yes").sum(axis=1).where(
         add_ons.notna().all(axis=1)
