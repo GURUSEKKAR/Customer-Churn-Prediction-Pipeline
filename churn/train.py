@@ -12,7 +12,7 @@ import pandas as pd
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import make_scorer, precision_score, recall_score
-from sklearn.model_selection import GridSearchCV, StratifiedKFold, train_test_split
+from sklearn.model_selection import GridSearchCV, RepeatedStratifiedKFold, train_test_split
 
 from churn.features import RAW_FEATURES, build_pipeline
 from churn.metrics import SCORE_BINS, classification_metrics, score_summary
@@ -71,12 +71,12 @@ def model_candidates() -> dict:
     }
 
 
-def train(data_path: Path, output_dir: Path, jobs: int) -> dict:
+def train(data_path: Path, output_dir: Path, jobs: int, repeats: int) -> dict:
     features, targets = load_data(data_path)
     x_train, x_test, y_train, y_test = train_test_split(
         features, targets, test_size=TEST_SIZE, stratify=targets, random_state=SEED
     )
-    validation = StratifiedKFold(n_splits=FOLDS, shuffle=True, random_state=SEED)
+    validation = RepeatedStratifiedKFold(n_splits=FOLDS, n_repeats=repeats, random_state=SEED)
     comparison = {}
     fitted_models = {}
     for name, (classifier, grid) in model_candidates().items():
@@ -98,12 +98,15 @@ def train(data_path: Path, output_dir: Path, jobs: int) -> dict:
                 for key, value in search.best_params_.items()
             },
             "cross_validation": {
-                metric: float(search.cv_results_[f"mean_test_{metric}"][search.best_index_])
+                metric: {
+                    "mean": float(search.cv_results_[f"mean_test_{metric}"][search.best_index_]),
+                    "std": float(search.cv_results_[f"std_test_{metric}"][search.best_index_]),
+                }
                 for metric in SCORING
             },
         }
 
-    selected = max(comparison, key=lambda name: comparison[name]["cross_validation"]["roc_auc"])
+    selected = max(comparison, key=lambda name: comparison[name]["cross_validation"]["roc_auc"]["mean"])
     for name, model in fitted_models.items():
         probabilities = model.predict_proba(x_test)[:, 1]
         predictions = (probabilities >= THRESHOLD).astype(int)
@@ -125,6 +128,7 @@ def train(data_path: Path, output_dir: Path, jobs: int) -> dict:
         },
         "random_seed": SEED,
         "cross_validation_folds": FOLDS,
+        "cross_validation_repeats": repeats,
         "models": comparison,
         "monitoring_baseline": {
             **baseline,
@@ -149,11 +153,14 @@ def main() -> None:
     parser.add_argument("--data", type=Path, default=Path("data/telco_churn.csv"))
     parser.add_argument("--output-dir", type=Path, default=Path("artifacts"))
     parser.add_argument("--jobs", type=int, default=1, help="Parallel grid-search workers")
+    parser.add_argument("--repeats", type=int, default=3, help="Repeats of five-fold model CV")
     args = parser.parse_args()
     if args.jobs == 0:
         parser.error("--jobs must be nonzero.")
+    if args.repeats < 2:
+        parser.error("--repeats must be at least two.")
     try:
-        report = train(args.data, args.output_dir, args.jobs)
+        report = train(args.data, args.output_dir, args.jobs, args.repeats)
     except (OSError, ValueError) as error:
         parser.exit(1, f"Training failed: {error}\n")
     print(f"Selected {report['selected_model']} by mean cross-validation ROC-AUC.")
