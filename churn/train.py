@@ -5,6 +5,7 @@ import hashlib
 import json
 import math
 import tempfile
+from importlib.metadata import version
 from pathlib import Path
 from uuid import uuid4
 
@@ -22,7 +23,7 @@ from sklearn.model_selection import (
     train_test_split,
 )
 
-from churn.features import RAW_FEATURES, build_pipeline
+from churn.features import RAW_FEATURES, build_pipeline, feature_source_hash
 from churn.metrics import SCORE_BINS, cutoff_metrics, ranking_metrics, score_summary
 from churn.threshold import choose_threshold
 
@@ -206,6 +207,13 @@ def train(
         "threshold_oof_seed": SEED + 1,
         "models": comparison,
         "threshold_comparison": threshold_comparison,
+        "artifact_metadata": {
+            "features_sha256": feature_source_hash(),
+            "library_versions": {
+                package: version(package)
+                for package in ("joblib", "numpy", "pandas", "scikit-learn", "scipy")
+            },
+        },
         "monitoring_baseline": {
             **baseline,
             "model_fit": "development_split",

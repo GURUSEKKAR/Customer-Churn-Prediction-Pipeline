@@ -1,5 +1,8 @@
 """Shared input schema and feature engineering for training and inference."""
 
+from hashlib import sha256
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
@@ -36,6 +39,10 @@ NUMERIC_INPUTS = ("SeniorCitizen", "tenure", "MonthlyCharges", "TotalCharges")
 RAW_FEATURES = (*NUMERIC_INPUTS, *CATEGORICAL_VALUES)
 NUMERIC_FEATURES = (*NUMERIC_INPUTS, "AverageChargesToDate", "InternetAddOnCount")
 MAX_NUMERIC_VALUE = 1_000_000_000
+
+
+def feature_source_hash() -> str:
+    return sha256(Path(__file__).read_bytes()).hexdigest()
 
 
 def validate_customer(payload: object) -> dict:
