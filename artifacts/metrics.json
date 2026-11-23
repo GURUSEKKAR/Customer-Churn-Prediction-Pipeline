@@ -1,0 +1,101 @@
+{
+  "selected_model": "gradient_boosting",
+  "model_version": "gradient_boosting-49d615c7be84",
+  "selection_metric": "mean_cross_validation_roc_auc",
+  "decision_threshold": 0.5,
+  "dataset": {
+    "sha256": "16320c9c1ec72448db59aa0a26a0b95401046bef5d02fd3aeb906448e3055e91",
+    "rows": 7043,
+    "churn_rate": 0.2653698707936959,
+    "train_rows": 5634,
+    "holdout_rows": 1409
+  },
+  "random_seed": 42,
+  "cross_validation_folds": 5,
+  "models": {
+    "logistic_regression": {
+      "best_parameters": {
+        "C": 10
+      },
+      "cross_validation": {
+        "roc_auc": 0.8457580319946401,
+        "precision": 0.6550903293408593,
+        "recall": 0.5491638795986622
+      },
+      "holdout": {
+        "precision": 0.653125,
+        "recall": 0.5588235294117647,
+        "roc_auc": 0.8410808855821643
+      }
+    },
+    "random_forest": {
+      "best_parameters": {
+        "max_depth": 6,
+        "min_samples_leaf": 8,
+        "n_estimators": 200
+      },
+      "cross_validation": {
+        "roc_auc": 0.8469924374692674,
+        "precision": 0.6778962039572303,
+        "recall": 0.4608695652173913
+      },
+      "holdout": {
+        "precision": 0.6793893129770993,
+        "recall": 0.47593582887700536,
+        "roc_auc": 0.8416582706864038
+      }
+    },
+    "gradient_boosting": {
+      "best_parameters": {
+        "learning_rate": 0.05,
+        "max_depth": 3,
+        "n_estimators": 100
+      },
+      "cross_validation": {
+        "roc_auc": 0.8498506188597006,
+        "precision": 0.6734224134249999,
+        "recall": 0.5137123745819399
+      },
+      "holdout": {
+        "precision": 0.6762589928057554,
+        "recall": 0.5026737967914439,
+        "roc_auc": 0.8451936242217571
+      }
+    }
+  },
+  "monitoring_baseline": {
+    "count": 1409,
+    "mean_probability": 0.265131037832169,
+    "predicted_churn_rate": 0.19730305180979418,
+    "score_histogram": [
+      0.36195883605393897,
+      0.16962384669978708,
+      0.09439318665720368,
+      0.09581263307310149,
+      0.08090844570617459,
+      0.07381121362668559,
+      0.057487579843860895,
+      0.034066713981547196,
+      0.0319375443577005,
+      0.0
+    ],
+    "score_bin_edges": [
+      0.0,
+      0.1,
+      0.2,
+      0.30000000000000004,
+      0.4,
+      0.5,
+      0.6000000000000001,
+      0.7000000000000001,
+      0.8,
+      0.9,
+      1.0
+    ],
+    "performance": {
+      "precision": 0.6762589928057554,
+      "recall": 0.5026737967914439,
+      "roc_auc": 0.8451936242217571
+    }
+  }
+}
