@@ -23,6 +23,7 @@ from sklearn.model_selection import (
     train_test_split,
 )
 
+from churn.explain import ChurnExplainer
 from churn.features import RAW_FEATURES, build_pipeline, feature_source_hash
 from churn.metrics import SCORE_BINS, cutoff_metrics, ranking_metrics, score_summary
 from churn.threshold import choose_threshold
@@ -174,6 +175,7 @@ def train(
             **ranking_metrics(y_test, probabilities),
         }
 
+    global_importance = ChurnExplainer(development_model).importance(x_test)
     chosen_predictions = boosting_scores >= threshold
     chosen_holdout = threshold_comparison[policy]["holdout"]
     baseline = score_summary(boosting_scores, chosen_predictions)
@@ -207,11 +209,16 @@ def train(
         "threshold_oof_seed": SEED + 1,
         "models": comparison,
         "threshold_comparison": threshold_comparison,
+        "holdout_global_shap": {
+            "model_fit": "development_split",
+            "rows": len(y_test),
+            "importance": global_importance,
+        },
         "artifact_metadata": {
             "features_sha256": feature_source_hash(),
             "library_versions": {
                 package: version(package)
-                for package in ("joblib", "numpy", "pandas", "scikit-learn", "scipy")
+                for package in ("joblib", "numpy", "pandas", "scikit-learn", "scipy", "shap")
             },
         },
         "monitoring_baseline": {
