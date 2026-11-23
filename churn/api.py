@@ -9,6 +9,7 @@ import pandas as pd
 from flask import Flask, abort, jsonify, request
 from werkzeug.exceptions import HTTPException
 
+from churn.explain import ChurnExplainer
 from churn.features import RAW_FEATURES, validate_customer
 from churn.monitor import init_log, log_prediction, monitoring_report, record_outcome
 
@@ -26,6 +27,7 @@ def create_app() -> Flask:
     report = artifact["report"]
     model_version = report["model_version"]
     threshold = report["decision_threshold"]
+    explainer = ChurnExplainer(pipeline)
     init_log(log_path)
 
     @app.errorhandler(HTTPException)
@@ -45,6 +47,9 @@ def create_app() -> Flask:
 
     @app.post("/predict")
     def predict():
+        explain = request.args.get("explain", "false")
+        if explain not in {"true", "false"}:
+            abort(400, description="explain must be true or false.")
         try:
             customer = validate_customer(request.get_json())
         except ValueError as error:
@@ -54,14 +59,17 @@ def create_app() -> Flask:
         probability = float(pipeline.predict_proba(record)[0, 1])
         prediction = int(probability >= threshold)
         prediction_id = str(uuid4())
+        result = {
+            "prediction_id": prediction_id,
+            "model_version": model_version,
+            "churn_probability": probability,
+            "predicted_churn": prediction,
+            "decision_threshold": threshold,
+        }
+        if explain == "true":
+            result["explanation"] = explainer.explain_customer(record)
         log_prediction(log_path, prediction_id, model_version, probability, prediction)
-        return jsonify(
-            prediction_id=prediction_id,
-            model_version=model_version,
-            churn_probability=probability,
-            predicted_churn=prediction,
-            decision_threshold=threshold,
-        )
+        return jsonify(result)
 
     @app.put("/predictions/<uuid:prediction_id>/outcome")
     def save_outcome(prediction_id: UUID):
