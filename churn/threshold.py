@@ -3,7 +3,9 @@
 import numpy as np
 
 
-def choose_threshold(actual, probabilities) -> float:
+def choose_threshold(
+    actual, probabilities, policy: str, target_recall: float, fp_cost: float, fn_cost: float
+) -> float:
     labels = np.asarray(actual, dtype=int)
     scores = np.asarray(probabilities, dtype=float)
     order = np.argsort(-scores, kind="stable")
@@ -19,4 +21,11 @@ def choose_threshold(actual, probabilities) -> float:
         flagged = np.r_[0, flagged]
     positives = labels.sum()
 
-    return float(cutoffs[np.argmax(2 * true_positives / (flagged + positives))])
+    if policy == "f1":
+        return float(cutoffs[np.argmax(2 * true_positives / (flagged + positives))])
+    if policy == "recall":
+        return float(cutoffs[np.flatnonzero(true_positives / positives >= target_recall)[0]])
+    if policy == "cost":
+        cost = fp_cost * (flagged - true_positives) + fn_cost * (positives - true_positives)
+        return float(cutoffs[np.argmin(cost)])
+    raise ValueError(f"Unsupported threshold policy: {policy}")
