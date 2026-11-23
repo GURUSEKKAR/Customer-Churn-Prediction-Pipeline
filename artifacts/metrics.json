@@ -1,31 +1,144 @@
 {
   "selected_model": "gradient_boosting",
-  "model_version": "gradient_boosting-49d615c7be84",
+  "cross_validation_leader": "gradient_boosting",
+  "model_version": "gradient_boosting-aa12a583ae46",
   "selection_metric": "mean_cross_validation_roc_auc",
   "decision_threshold": 0.5,
+  "decision_policy": "fixed",
+  "policy_inputs": {
+    "target_recall": 0.7,
+    "false_positive_cost": 1.0,
+    "false_negative_cost": 5.0
+  },
   "dataset": {
     "sha256": "16320c9c1ec72448db59aa0a26a0b95401046bef5d02fd3aeb906448e3055e91",
     "rows": 7043,
     "churn_rate": 0.2653698707936959,
     "train_rows": 5634,
-    "holdout_rows": 1409
+    "holdout_rows": 1409,
+    "final_fit_rows": 7043
   },
   "random_seed": 42,
   "cross_validation_folds": 5,
+  "cross_validation_repeats": 3,
+  "threshold_oof_seed": 43,
   "models": {
     "logistic_regression": {
       "best_parameters": {
         "C": 10
       },
       "cross_validation": {
-        "roc_auc": 0.8457580319946401,
-        "precision": 0.6550903293408593,
-        "recall": 0.5491638795986622
+        "roc_auc": {
+          "mean": 0.8464742392301865,
+          "std": 0.011589108844375454
+        },
+        "precision": {
+          "mean": 0.6588073053437621,
+          "std": 0.026903172475159214
+        },
+        "recall": {
+          "mean": 0.5500557413600891,
+          "std": 0.034169771995440704
+        }
       },
       "holdout": {
-        "precision": 0.653125,
-        "recall": 0.5588235294117647,
-        "roc_auc": 0.8410808855821643
+        "cutoff": 0.5,
+        "customers": 1409,
+        "churners": 374,
+        "flagged": 318,
+        "precision": 0.6540880503144654,
+        "recall": 0.5561497326203209,
+        "f1": 0.6011560693641619,
+        "confusion_matrix": {
+          "true_negatives": 925,
+          "false_positives": 110,
+          "false_negatives": 166,
+          "true_positives": 208
+        },
+        "business_cost": {
+          "total": 940.0,
+          "per_customer": 0.6671398154719659
+        },
+        "roc_auc": 0.8412720555943062,
+        "average_precision": 0.6278441646033448,
+        "brier_score": 0.13847468625758305,
+        "top_decile_lift": {
+          "customers": 141,
+          "churn_rate": 0.7375886524822695,
+          "lift": 2.7787765009291916
+        },
+        "calibration_bins": [
+          {
+            "lower_probability": 0.0,
+            "upper_probability": 0.1,
+            "count": 539,
+            "mean_probability": 0.03482085325290769,
+            "observed_churn_rate": 0.03710575139146568
+          },
+          {
+            "lower_probability": 0.1,
+            "upper_probability": 0.2,
+            "count": 179,
+            "mean_probability": 0.1481923241414836,
+            "observed_churn_rate": 0.18435754189944134
+          },
+          {
+            "lower_probability": 0.2,
+            "upper_probability": 0.30000000000000004,
+            "count": 150,
+            "mean_probability": 0.24506518041835923,
+            "observed_churn_rate": 0.2733333333333333
+          },
+          {
+            "lower_probability": 0.30000000000000004,
+            "upper_probability": 0.4,
+            "count": 100,
+            "mean_probability": 0.3458210627160574,
+            "observed_churn_rate": 0.31
+          },
+          {
+            "lower_probability": 0.4,
+            "upper_probability": 0.5,
+            "count": 123,
+            "mean_probability": 0.45395626533428757,
+            "observed_churn_rate": 0.3333333333333333
+          },
+          {
+            "lower_probability": 0.5,
+            "upper_probability": 0.6000000000000001,
+            "count": 110,
+            "mean_probability": 0.5483714887815275,
+            "observed_churn_rate": 0.5363636363636364
+          },
+          {
+            "lower_probability": 0.6000000000000001,
+            "upper_probability": 0.7000000000000001,
+            "count": 115,
+            "mean_probability": 0.6509097626326236,
+            "observed_churn_rate": 0.6869565217391305
+          },
+          {
+            "lower_probability": 0.7000000000000001,
+            "upper_probability": 0.8,
+            "count": 79,
+            "mean_probability": 0.7381953069979365,
+            "observed_churn_rate": 0.7468354430379747
+          },
+          {
+            "lower_probability": 0.8,
+            "upper_probability": 0.9,
+            "count": 14,
+            "mean_probability": 0.8184630151019843,
+            "observed_churn_rate": 0.7857142857142857
+          },
+          {
+            "lower_probability": 0.9,
+            "upper_probability": 1.0,
+            "count": 0,
+            "mean_probability": null,
+            "observed_churn_rate": null
+          }
+        ]
       }
     },
     "random_forest": {
@@ -35,50 +148,736 @@
         "n_estimators": 200
       },
       "cross_validation": {
-        "roc_auc": 0.8469924374692674,
-        "precision": 0.6778962039572303,
-        "recall": 0.4608695652173913
+        "roc_auc": {
+          "mean": 0.8473768035645869,
+          "std": 0.011463572679801037
+        },
+        "precision": {
+          "mean": 0.680198992487512,
+          "std": 0.02545387230573695
+        },
+        "recall": {
+          "mean": 0.46309921962095874,
+          "std": 0.042019373828865315
+        }
       },
       "holdout": {
-        "precision": 0.6793893129770993,
-        "recall": 0.47593582887700536,
-        "roc_auc": 0.8416582706864038
+        "cutoff": 0.5,
+        "customers": 1409,
+        "churners": 374,
+        "flagged": 252,
+        "precision": 0.6746031746031746,
+        "recall": 0.45454545454545453,
+        "f1": 0.5431309904153354,
+        "confusion_matrix": {
+          "true_negatives": 953,
+          "false_positives": 82,
+          "false_negatives": 204,
+          "true_positives": 170
+        },
+        "business_cost": {
+          "total": 1102.0,
+          "per_customer": 0.7821149751596878
+        },
+        "roc_auc": 0.8424733266165492,
+        "average_precision": 0.6568148481728389,
+        "brier_score": 0.13735478149517338,
+        "top_decile_lift": {
+          "customers": 141,
+          "churn_rate": 0.75177304964539,
+          "lift": 2.832214510562445
+        },
+        "calibration_bins": [
+          {
+            "lower_probability": 0.0,
+            "upper_probability": 0.1,
+            "count": 440,
+            "mean_probability": 0.04393231050598086,
+            "observed_churn_rate": 0.02727272727272727
+          },
+          {
+            "lower_probability": 0.1,
+            "upper_probability": 0.2,
+            "count": 245,
+            "mean_probability": 0.1442567555934853,
+            "observed_churn_rate": 0.1469387755102041
+          },
+          {
+            "lower_probability": 0.2,
+            "upper_probability": 0.30000000000000004,
+            "count": 178,
+            "mean_probability": 0.24697585641678196,
+            "observed_churn_rate": 0.20786516853932585
+          },
+          {
+            "lower_probability": 0.30000000000000004,
+            "upper_probability": 0.4,
+            "count": 129,
+            "mean_probability": 0.34977747840131795,
+            "observed_churn_rate": 0.37209302325581395
+          },
+          {
+            "lower_probability": 0.4,
+            "upper_probability": 0.5,
+            "count": 165,
+            "mean_probability": 0.44919732416339225,
+            "observed_churn_rate": 0.4303030303030303
+          },
+          {
+            "lower_probability": 0.5,
+            "upper_probability": 0.6000000000000001,
+            "count": 99,
+            "mean_probability": 0.5410401266948665,
+            "observed_churn_rate": 0.5656565656565656
+          },
+          {
+            "lower_probability": 0.6000000000000001,
+            "upper_probability": 0.7000000000000001,
+            "count": 93,
+            "mean_probability": 0.645912644601496,
+            "observed_churn_rate": 0.6666666666666666
+          },
+          {
+            "lower_probability": 0.7000000000000001,
+            "upper_probability": 0.8,
+            "count": 60,
+            "mean_probability": 0.7316321323034972,
+            "observed_churn_rate": 0.8666666666666667
+          },
+          {
+            "lower_probability": 0.8,
+            "upper_probability": 0.9,
+            "count": 0,
+            "mean_probability": null,
+            "observed_churn_rate": null
+          },
+          {
+            "lower_probability": 0.9,
+            "upper_probability": 1.0,
+            "count": 0,
+            "mean_probability": null,
+            "observed_churn_rate": null
+          }
+        ]
       }
     },
     "gradient_boosting": {
       "best_parameters": {
         "learning_rate": 0.05,
-        "max_depth": 3,
-        "n_estimators": 100
+        "max_depth": 2,
+        "n_estimators": 200
       },
       "cross_validation": {
-        "roc_auc": 0.8498506188597006,
-        "precision": 0.6734224134249999,
-        "recall": 0.5137123745819399
+        "roc_auc": {
+          "mean": 0.8495281470701087,
+          "std": 0.012326359323027492
+        },
+        "precision": {
+          "mean": 0.6720209525174233,
+          "std": 0.021858370349594126
+        },
+        "recall": {
+          "mean": 0.524860646599777,
+          "std": 0.03739177633489682
+        }
       },
       "holdout": {
-        "precision": 0.6762589928057554,
-        "recall": 0.5026737967914439,
-        "roc_auc": 0.8451936242217571
+        "cutoff": 0.5,
+        "customers": 1409,
+        "churners": 374,
+        "flagged": 289,
+        "precision": 0.6539792387543253,
+        "recall": 0.5053475935828877,
+        "f1": 0.5701357466063348,
+        "confusion_matrix": {
+          "true_negatives": 935,
+          "false_positives": 100,
+          "false_negatives": 185,
+          "true_positives": 189
+        },
+        "business_cost": {
+          "total": 1025.0,
+          "per_customer": 0.7274662881476224
+        },
+        "roc_auc": 0.8456457154666873,
+        "average_precision": 0.6651770498454583,
+        "brier_score": 0.13540945891348857,
+        "top_decile_lift": {
+          "customers": 141,
+          "churn_rate": 0.7588652482269503,
+          "lift": 2.8589335153790723
+        },
+        "calibration_bins": [
+          {
+            "lower_probability": 0.0,
+            "upper_probability": 0.1,
+            "count": 530,
+            "mean_probability": 0.044710436375862916,
+            "observed_churn_rate": 0.04150943396226415
+          },
+          {
+            "lower_probability": 0.1,
+            "upper_probability": 0.2,
+            "count": 222,
+            "mean_probability": 0.14426875505030862,
+            "observed_churn_rate": 0.16666666666666666
+          },
+          {
+            "lower_probability": 0.2,
+            "upper_probability": 0.30000000000000004,
+            "count": 115,
+            "mean_probability": 0.24908808378319547,
+            "observed_churn_rate": 0.24347826086956523
+          },
+          {
+            "lower_probability": 0.30000000000000004,
+            "upper_probability": 0.4,
+            "count": 123,
+            "mean_probability": 0.3444167482896265,
+            "observed_churn_rate": 0.3008130081300813
+          },
+          {
+            "lower_probability": 0.4,
+            "upper_probability": 0.5,
+            "count": 130,
+            "mean_probability": 0.44539045071723127,
+            "observed_churn_rate": 0.46923076923076923
+          },
+          {
+            "lower_probability": 0.5,
+            "upper_probability": 0.6000000000000001,
+            "count": 107,
+            "mean_probability": 0.5497819364655819,
+            "observed_churn_rate": 0.5327102803738317
+          },
+          {
+            "lower_probability": 0.6000000000000001,
+            "upper_probability": 0.7000000000000001,
+            "count": 79,
+            "mean_probability": 0.6454786151174662,
+            "observed_churn_rate": 0.620253164556962
+          },
+          {
+            "lower_probability": 0.7000000000000001,
+            "upper_probability": 0.8,
+            "count": 54,
+            "mean_probability": 0.7432841390771331,
+            "observed_churn_rate": 0.7407407407407407
+          },
+          {
+            "lower_probability": 0.8,
+            "upper_probability": 0.9,
+            "count": 47,
+            "mean_probability": 0.829360467214754,
+            "observed_churn_rate": 0.8723404255319149
+          },
+          {
+            "lower_probability": 0.9,
+            "upper_probability": 1.0,
+            "count": 2,
+            "mean_probability": 0.9138689661352977,
+            "observed_churn_rate": 1.0
+          }
+        ]
       }
+    }
+  },
+  "threshold_comparison": {
+    "fixed": {
+      "cutoff": 0.5,
+      "out_of_fold": {
+        "customers": 5634,
+        "churners": 1495,
+        "flagged": 1158,
+        "precision": 0.6727115716753023,
+        "recall": 0.5210702341137123,
+        "f1": 0.5872597059932152,
+        "confusion_matrix": {
+          "true_negatives": 3760,
+          "false_positives": 379,
+          "false_negatives": 716,
+          "true_positives": 779
+        },
+        "business_cost": {
+          "total": 3959.0,
+          "per_customer": 0.7026979055733049
+        }
+      },
+      "holdout": {
+        "customers": 1409,
+        "churners": 374,
+        "flagged": 289,
+        "precision": 0.6539792387543253,
+        "recall": 0.5053475935828877,
+        "f1": 0.5701357466063348,
+        "confusion_matrix": {
+          "true_negatives": 935,
+          "false_positives": 100,
+          "false_negatives": 185,
+          "true_positives": 189
+        },
+        "business_cost": {
+          "total": 1025.0,
+          "per_customer": 0.7274662881476224
+        }
+      },
+      "holdout_by_contract": {
+        "Month-to-month": {
+          "customers": 773,
+          "churners": 329,
+          "flagged": 287,
+          "precision": 0.6550522648083623,
+          "recall": 0.5714285714285714,
+          "f1": 0.6103896103896104,
+          "confusion_matrix": {
+            "true_negatives": 345,
+            "false_positives": 99,
+            "false_negatives": 141,
+            "true_positives": 188
+          },
+          "business_cost": {
+            "total": 804.0,
+            "per_customer": 1.0401034928848643
+          }
+        },
+        "One year": {
+          "customers": 300,
+          "churners": 36,
+          "flagged": 2,
+          "precision": 0.5,
+          "recall": 0.027777777777777776,
+          "f1": 0.05263157894736842,
+          "confusion_matrix": {
+            "true_negatives": 263,
+            "false_positives": 1,
+            "false_negatives": 35,
+            "true_positives": 1
+          },
+          "business_cost": {
+            "total": 176.0,
+            "per_customer": 0.5866666666666667
+          }
+        },
+        "Two year": {
+          "customers": 336,
+          "churners": 9,
+          "flagged": 0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "confusion_matrix": {
+            "true_negatives": 327,
+            "false_positives": 0,
+            "false_negatives": 9,
+            "true_positives": 0
+          },
+          "business_cost": {
+            "total": 45.0,
+            "per_customer": 0.13392857142857142
+          }
+        }
+      }
+    },
+    "f1": {
+      "cutoff": 0.3291043337596067,
+      "out_of_fold": {
+        "customers": 5634,
+        "churners": 1495,
+        "flagged": 1917,
+        "precision": 0.5675534689619197,
+        "recall": 0.7277591973244147,
+        "f1": 0.6377491207502931,
+        "confusion_matrix": {
+          "true_negatives": 3310,
+          "false_positives": 829,
+          "false_negatives": 407,
+          "true_positives": 1088
+        },
+        "business_cost": {
+          "total": 2864.0,
+          "per_customer": 0.5083422080227192
+        }
+      },
+      "holdout": {
+        "customers": 1409,
+        "churners": 374,
+        "flagged": 493,
+        "precision": 0.5618661257606491,
+        "recall": 0.7406417112299465,
+        "f1": 0.6389850057670127,
+        "confusion_matrix": {
+          "true_negatives": 819,
+          "false_positives": 216,
+          "false_negatives": 97,
+          "true_positives": 277
+        },
+        "business_cost": {
+          "total": 701.0,
+          "per_customer": 0.49751596877217885
+        }
+      },
+      "holdout_by_contract": {
+        "Month-to-month": {
+          "customers": 773,
+          "churners": 329,
+          "flagged": 487,
+          "precision": 0.5646817248459959,
+          "recall": 0.8358662613981763,
+          "f1": 0.6740196078431373,
+          "confusion_matrix": {
+            "true_negatives": 232,
+            "false_positives": 212,
+            "false_negatives": 54,
+            "true_positives": 275
+          },
+          "business_cost": {
+            "total": 482.0,
+            "per_customer": 0.6235446313065977
+          }
+        },
+        "One year": {
+          "customers": 300,
+          "churners": 36,
+          "flagged": 6,
+          "precision": 0.3333333333333333,
+          "recall": 0.05555555555555555,
+          "f1": 0.09523809523809523,
+          "confusion_matrix": {
+            "true_negatives": 260,
+            "false_positives": 4,
+            "false_negatives": 34,
+            "true_positives": 2
+          },
+          "business_cost": {
+            "total": 174.0,
+            "per_customer": 0.58
+          }
+        },
+        "Two year": {
+          "customers": 336,
+          "churners": 9,
+          "flagged": 0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "confusion_matrix": {
+            "true_negatives": 327,
+            "false_positives": 0,
+            "false_negatives": 9,
+            "true_positives": 0
+          },
+          "business_cost": {
+            "total": 45.0,
+            "per_customer": 0.13392857142857142
+          }
+        }
+      }
+    },
+    "recall": {
+      "cutoff": 0.35467505757005463,
+      "out_of_fold": {
+        "customers": 5634,
+        "churners": 1495,
+        "flagged": 1795,
+        "precision": 0.5832869080779944,
+        "recall": 0.7003344481605351,
+        "f1": 0.6364741641337386,
+        "confusion_matrix": {
+          "true_negatives": 3391,
+          "false_positives": 748,
+          "false_negatives": 448,
+          "true_positives": 1047
+        },
+        "business_cost": {
+          "total": 2988.0,
+          "per_customer": 0.5303514376996805
+        }
+      },
+      "holdout": {
+        "customers": 1409,
+        "churners": 374,
+        "flagged": 467,
+        "precision": 0.5738758029978587,
+        "recall": 0.7165775401069518,
+        "f1": 0.6373365041617123,
+        "confusion_matrix": {
+          "true_negatives": 836,
+          "false_positives": 199,
+          "false_negatives": 106,
+          "true_positives": 268
+        },
+        "business_cost": {
+          "total": 729.0,
+          "per_customer": 0.517388218594748
+        }
+      },
+      "holdout_by_contract": {
+        "Month-to-month": {
+          "customers": 773,
+          "churners": 329,
+          "flagged": 462,
+          "precision": 0.5757575757575758,
+          "recall": 0.8085106382978723,
+          "f1": 0.672566371681416,
+          "confusion_matrix": {
+            "true_negatives": 248,
+            "false_positives": 196,
+            "false_negatives": 63,
+            "true_positives": 266
+          },
+          "business_cost": {
+            "total": 511.0,
+            "per_customer": 0.6610608020698577
+          }
+        },
+        "One year": {
+          "customers": 300,
+          "churners": 36,
+          "flagged": 5,
+          "precision": 0.4,
+          "recall": 0.05555555555555555,
+          "f1": 0.0975609756097561,
+          "confusion_matrix": {
+            "true_negatives": 261,
+            "false_positives": 3,
+            "false_negatives": 34,
+            "true_positives": 2
+          },
+          "business_cost": {
+            "total": 173.0,
+            "per_customer": 0.5766666666666667
+          }
+        },
+        "Two year": {
+          "customers": 336,
+          "churners": 9,
+          "flagged": 0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "confusion_matrix": {
+            "true_negatives": 327,
+            "false_positives": 0,
+            "false_negatives": 9,
+            "true_positives": 0
+          },
+          "business_cost": {
+            "total": 45.0,
+            "per_customer": 0.13392857142857142
+          }
+        }
+      }
+    },
+    "cost": {
+      "cutoff": 0.138582700672843,
+      "out_of_fold": {
+        "customers": 5634,
+        "churners": 1495,
+        "flagged": 3092,
+        "precision": 0.4421086675291074,
+        "recall": 0.91438127090301,
+        "f1": 0.5960322650970133,
+        "confusion_matrix": {
+          "true_negatives": 2414,
+          "false_positives": 1725,
+          "false_negatives": 128,
+          "true_positives": 1367
+        },
+        "business_cost": {
+          "total": 2365.0,
+          "per_customer": 0.41977280795172167
+        }
+      },
+      "holdout": {
+        "customers": 1409,
+        "churners": 374,
+        "flagged": 775,
+        "precision": 0.4335483870967742,
+        "recall": 0.8983957219251337,
+        "f1": 0.5848563968668408,
+        "confusion_matrix": {
+          "true_negatives": 596,
+          "false_positives": 439,
+          "false_negatives": 38,
+          "true_positives": 336
+        },
+        "business_cost": {
+          "total": 629.0,
+          "per_customer": 0.4464158977998581
+        }
+      },
+      "holdout_by_contract": {
+        "Month-to-month": {
+          "customers": 773,
+          "churners": 329,
+          "flagged": 688,
+          "precision": 0.45930232558139533,
+          "recall": 0.9604863221884499,
+          "f1": 0.6214355948869223,
+          "confusion_matrix": {
+            "true_negatives": 72,
+            "false_positives": 372,
+            "false_negatives": 13,
+            "true_positives": 316
+          },
+          "business_cost": {
+            "total": 437.0,
+            "per_customer": 0.5653298835705045
+          }
+        },
+        "One year": {
+          "customers": 300,
+          "churners": 36,
+          "flagged": 76,
+          "precision": 0.2631578947368421,
+          "recall": 0.5555555555555556,
+          "f1": 0.35714285714285715,
+          "confusion_matrix": {
+            "true_negatives": 208,
+            "false_positives": 56,
+            "false_negatives": 16,
+            "true_positives": 20
+          },
+          "business_cost": {
+            "total": 136.0,
+            "per_customer": 0.4533333333333333
+          }
+        },
+        "Two year": {
+          "customers": 336,
+          "churners": 9,
+          "flagged": 11,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "confusion_matrix": {
+            "true_negatives": 316,
+            "false_positives": 11,
+            "false_negatives": 9,
+            "true_positives": 0
+          },
+          "business_cost": {
+            "total": 56.0,
+            "per_customer": 0.16666666666666666
+          }
+        }
+      }
+    }
+  },
+  "holdout_global_shap": {
+    "model_fit": "development_split",
+    "rows": 1409,
+    "importance": [
+      {
+        "feature": "Contract",
+        "mean_absolute_log_odds": 0.5865676403311132
+      },
+      {
+        "feature": "tenure",
+        "mean_absolute_log_odds": 0.46253401600374716
+      },
+      {
+        "feature": "InternetService",
+        "mean_absolute_log_odds": 0.2787400308238362
+      },
+      {
+        "feature": "OnlineSecurity",
+        "mean_absolute_log_odds": 0.20149467568781382
+      },
+      {
+        "feature": "TechSupport",
+        "mean_absolute_log_odds": 0.19671475134818206
+      },
+      {
+        "feature": "PaymentMethod",
+        "mean_absolute_log_odds": 0.1641565245864465
+      },
+      {
+        "feature": "PaperlessBilling",
+        "mean_absolute_log_odds": 0.125043431104811
+      },
+      {
+        "feature": "MultipleLines",
+        "mean_absolute_log_odds": 0.10884663304013079
+      },
+      {
+        "feature": "AverageChargesToDate",
+        "mean_absolute_log_odds": 0.10438583630654817
+      },
+      {
+        "feature": "OnlineBackup",
+        "mean_absolute_log_odds": 0.08776537679012379
+      },
+      {
+        "feature": "TotalCharges",
+        "mean_absolute_log_odds": 0.07754146227951467
+      },
+      {
+        "feature": "MonthlyCharges",
+        "mean_absolute_log_odds": 0.07537854726505111
+      },
+      {
+        "feature": "StreamingTV",
+        "mean_absolute_log_odds": 0.0560443412233157
+      },
+      {
+        "feature": "StreamingMovies",
+        "mean_absolute_log_odds": 0.04324224818718312
+      },
+      {
+        "feature": "Dependents",
+        "mean_absolute_log_odds": 0.03729536499322959
+      },
+      {
+        "feature": "InternetAddOnCount",
+        "mean_absolute_log_odds": 0.03574521235888396
+      },
+      {
+        "feature": "SeniorCitizen",
+        "mean_absolute_log_odds": 0.030598750877227972
+      },
+      {
+        "feature": "PhoneService",
+        "mean_absolute_log_odds": 0.0018393957578891696
+      },
+      {
+        "feature": "Partner",
+        "mean_absolute_log_odds": 0.0
+      },
+      {
+        "feature": "DeviceProtection",
+        "mean_absolute_log_odds": 0.0
+      }
+    ]
+  },
+  "artifact_metadata": {
+    "features_sha256": "0f6c805b13958a8048299cfa799f169b8c5057f5e2ef05aeb957b321aef7d13e",
+    "library_versions": {
+      "joblib": "1.5.2",
+      "numpy": "2.4.6",
+      "pandas": "2.2.3",
+      "scikit-learn": "1.7.2",
+      "scipy": "1.15.3",
+      "shap": "0.50.0"
     }
   },
   "monitoring_baseline": {
     "count": 1409,
-    "mean_probability": 0.265131037832169,
-    "predicted_churn_rate": 0.19730305180979418,
+    "mean_probability": 0.2664285623604924,
+    "predicted_churn_rate": 0.20511000709723207,
     "score_histogram": [
-      0.36195883605393897,
-      0.16962384669978708,
-      0.09439318665720368,
-      0.09581263307310149,
-      0.08090844570617459,
-      0.07381121362668559,
-      0.057487579843860895,
-      0.034066713981547196,
-      0.0319375443577005,
-      0.0
+      0.376153300212917,
+      0.15755855216465578,
+      0.08161816891412349,
+      0.08729595457771469,
+      0.09226401703335699,
+      0.07594038325053229,
+      0.056068133427963095,
+      0.0383250532292406,
+      0.0333569907735983,
+      0.0014194464158978
     ],
+    "model_fit": "development_split",
     "score_bin_edges": [
       0.0,
       0.1,
@@ -93,9 +892,9 @@
       1.0
     ],
     "performance": {
-      "precision": 0.6762589928057554,
-      "recall": 0.5026737967914439,
-      "roc_auc": 0.8451936242217571
+      "precision": 0.6539792387543253,
+      "recall": 0.5053475935828877,
+      "roc_auc": 0.8456457154666873
     }
   }
 }
