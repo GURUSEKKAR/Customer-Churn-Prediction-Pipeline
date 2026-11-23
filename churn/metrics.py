@@ -1,7 +1,11 @@
 """Metrics shared by holdout evaluation and live monitoring."""
 
+import math
+
 import numpy as np
 from sklearn.metrics import (
+    average_precision_score,
+    brier_score_loss,
     confusion_matrix,
     f1_score,
     precision_score,
@@ -49,4 +53,21 @@ def cutoff_metrics(actual, predictions, fp_cost: float, fn_cost: float) -> dict:
             "false_negatives": fn, "true_positives": tp,
         },
         "business_cost": {"total": total_cost, "per_customer": total_cost / (tn + fp + fn + tp)},
+    }
+
+
+def ranking_metrics(actual, probabilities) -> dict:
+    labels = np.asarray(actual, dtype=int)
+    scores = np.asarray(probabilities, dtype=float)
+    top_count = math.ceil(0.1 * len(labels))
+    top = np.argsort(-scores, kind="stable")[:top_count]
+    return {
+        "roc_auc": float(roc_auc_score(labels, scores)),
+        "average_precision": float(average_precision_score(labels, scores)),
+        "brier_score": float(brier_score_loss(labels, scores)),
+        "top_decile_lift": {
+            "customers": top_count,
+            "churn_rate": float(labels[top].mean()),
+            "lift": float(labels[top].mean() / labels.mean()),
+        },
     }
