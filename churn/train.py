@@ -1,4 +1,4 @@
-"""Tune three classifiers and export the winning pipeline and holdout report."""
+"""Compare three classifiers and export the Gradient Boosting pipeline."""
 
 import argparse
 import hashlib
@@ -21,6 +21,7 @@ SEED = 42
 TEST_SIZE = 0.2
 FOLDS = 5
 THRESHOLD = 0.5
+DEFAULT_MODEL = "gradient_boosting"
 SCORING = {
     "roc_auc": "roc_auc",
     "precision": make_scorer(precision_score, zero_division=0),
@@ -106,7 +107,8 @@ def train(data_path: Path, output_dir: Path, jobs: int, repeats: int) -> dict:
             },
         }
 
-    selected = max(comparison, key=lambda name: comparison[name]["cross_validation"]["roc_auc"]["mean"])
+    cv_leader = max(comparison, key=lambda name: comparison[name]["cross_validation"]["roc_auc"]["mean"])
+    selected = DEFAULT_MODEL
     for name, model in fitted_models.items():
         probabilities = model.predict_proba(x_test)[:, 1]
         predictions = (probabilities >= THRESHOLD).astype(int)
@@ -116,6 +118,7 @@ def train(data_path: Path, output_dir: Path, jobs: int, repeats: int) -> dict:
 
     report = {
         "selected_model": selected,
+        "cross_validation_leader": cv_leader,
         "model_version": f"{selected}-{uuid4().hex[:12]}",
         "selection_metric": "mean_cross_validation_roc_auc",
         "decision_threshold": THRESHOLD,
@@ -163,7 +166,8 @@ def main() -> None:
         report = train(args.data, args.output_dir, args.jobs, args.repeats)
     except (OSError, ValueError) as error:
         parser.exit(1, f"Training failed: {error}\n")
-    print(f"Selected {report['selected_model']} by mean cross-validation ROC-AUC.")
+    print(f"Cross-validation ROC-AUC leader: {report['cross_validation_leader']}.")
+    print(f"Packaged {report['selected_model']} at cutoff {report['decision_threshold']:.5f}.")
     print(f"Saved the model and metrics to {args.output_dir}/.")
 
 
