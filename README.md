@@ -1,58 +1,82 @@
 # Customer Churn Prediction Pipeline
 
-Train a churn classifier with pandas and scikit-learn, serve churn probabilities through Flask, and track changes in model scores and observed performance.
+Compare churn classifiers, set an outreach cutoff from training predictions, and serve the refitted Gradient Boosting model with optional SHAP explanations.
 
-## Quick start
+## Run the packaged model
 
-Use Python 3.11–3.13. The commands below run from the repository root in a macOS or Linux shell.
+Use Python 3.11–3.13. Run these commands from the extracted project directory in a macOS or Linux shell.
 
 ```bash
 python3.13 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
-
-mkdir -p data
-curl -fL 'https://raw.githubusercontent.com/IBM/telco-customer-churn-on-icp4d/master/data/Telco-Customer-Churn.csv' -o data/telco_churn.csv
-python -m churn.train
-
+python -m unittest discover -s tests -v
 python -m flask --app churn.api run --port 8000
 ```
 
-Training writes the fitted pipeline to `artifacts/churn_model.joblib` and the evaluation to `artifacts/metrics.json`. Use `python -m churn.train --help` to select a CSV, output directory, or number of parallel training workers.
+The package includes the fitted model in `artifacts/churn_model.joblib` and its evaluation in [metrics.json](artifacts/metrics.json). The artifact records the library versions and the preprocessing source checksum.
 
-## Model training and results
+## Reproduce training and choose a cutoff
 
-The [IBM Telco Customer Churn sample](https://github.com/IBM/telco-customer-churn-on-icp4d#flow) contains 7,043 customers, of whom 26.5% churned. The training script removes duplicate rows and excludes the customer ID from model inputs. It converts blank charges to missing values, derives average charges to date and an Internet add-on count, and fits imputation, scaling, and one-hot encoding inside each cross-validation fold.
+```bash
+mkdir -p data
+curl -fL 'https://raw.githubusercontent.com/IBM/telco-customer-churn-on-icp4d/master/data/Telco-Customer-Churn.csv' -o data/telco_churn.csv
+python -m churn.train
+```
 
-The script uses a stratified 80/20 split and tunes every classifier on the training partition with five-fold stratified cross-validation. It selects the model with the highest mean cross-validation ROC-AUC, then reports precision, recall, and ROC-AUC on the 1,409-customer holdout. Precision and recall use a churn threshold of 0.50.
+The report records the source CSV's SHA-256 hash. The [IBM Telco Customer Churn sample](https://github.com/IBM/telco-customer-churn-on-icp4d#flow) has 7,043 customers. Customer ID and gender are excluded from modeling. For zero-tenure accounts, a blank `TotalCharges` becomes zero and the current monthly charge is used as the average charge. For customers with tenure, missing charges are imputed using medians learned within the training fold.
 
-| Model | CV ROC-AUC | Holdout ROC-AUC | Holdout precision | Holdout recall |
-| --- | ---: | ---: | ---: | ---: |
-| Logistic Regression | 0.8458 | 0.8411 | 0.6531 | 0.5588 |
-| Random Forest | 0.8470 | 0.8417 | 0.6794 | 0.4759 |
-| **Gradient Boosting** | **0.8499** | **0.8452** | **0.6763** | **0.5027** |
+Training uses a stratified 80/20 split. The three classifiers are tuned on 5,634 customers using three repeats of five-fold stratified cross-validation. The report gives each metric's mean and standard deviation across those folds. After tuning, five-fold out-of-fold predictions on the training partition supply the outreach cutoff. All holdout results use 1,409 customers and models fitted on the training partition. The deployment model is then refitted on all 7,043 customers with the chosen hyperparameters and cutoff.
 
-[Full metrics and best hyperparameters](artifacts/metrics.json)
+| Policy | Example command |
+| --- | --- |
+| Fixed cutoff (packaged default) | `python -m churn.train --threshold 0.50` |
+| Maximize F1 | `python -m churn.train --threshold-policy f1` |
+| Meet an out-of-fold recall target | `python -m churn.train --threshold-policy recall --target-recall 0.70` |
+| Minimize cost from false alerts and missed churners | `python -m churn.train --threshold-policy cost --false-positive-cost 1 --false-negative-cost 5` |
+
+The 1:5 cost ratio is an example in relative units. For each policy, the report shows customers flagged, churners found, false alerts, and cost on both training out-of-fold and holdout predictions. Contract groups in the holdout have their own counts and recall. The model comparison includes ROC-AUC, average precision (stepwise area under the precision-recall curve), Brier score, calibration bins, F1, confusion matrices, and lift among the top-scored 10%.
+
+## Results from the packaged run
+
+| Model | CV ROC-AUC mean ± fold SD | Holdout ROC-AUC | Holdout average precision |
+| --- | ---: | ---: | ---: |
+| Logistic Regression | 0.84647 ± 0.01159 | 0.84127 | 0.62784 |
+| Random Forest | 0.84738 ± 0.01146 | 0.84247 | 0.65681 |
+| Gradient Boosting | 0.84953 ± 0.01233 | 0.84565 | 0.66518 |
+
+| Outreach policy | Cutoff | Customers flagged | Churners found | False alerts | Recall |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Fixed | 0.50000 | 289 | 189 | 100 | 50.5% |
+| F1 | 0.32910 | 493 | 277 | 216 | 74.1% |
+| 70% training recall target | 0.35468 | 467 | 268 | 199 | 71.7% |
+| Example 1:5 cost ratio | 0.13858 | 775 | 336 | 439 | 89.8% |
+
+The 70% recall policy found 79 more churners for 178 more contacts than the fixed cutoff. It identified 2 of the 45 holdout churners on one- and two-year contracts.
 
 ## REST API
 
 | Method | Route | Purpose |
 | --- | --- | --- |
-| GET | `/health` | Check that the model is loaded and see its version. |
-| POST | `/predict` | Score one customer and return the churn probability, binary prediction, and prediction ID. |
-| PUT | `/predictions/<prediction_id>/outcome` | Record a confirmed churn outcome. Use `1` for churn and `0` for retained. |
-| GET | `/monitoring?days=30` | Compare recent scores and available outcome-based metrics with the holdout baseline. |
+| GET | `/health` | Check the loaded model and version. |
+| POST | `/predict` | Score one customer and log the prediction. |
+| POST | `/predict?explain=true` | Include SHAP contributions in the scoring response. |
+| PUT | `/predictions/<prediction_id>/outcome` | Record a confirmed outcome using `actual_churn` of `1` or `0`. |
+| GET | `/monitoring?days=30` | Compare recent scores and available performance with the development holdout reference. |
 
-With the Flask server running, open a second terminal in the repository root and send the [example customer](examples/customer.json).
+Send the [example customer](examples/customer.json) from a second terminal.
 
 ```bash
-curl -fsS http://127.0.0.1:8000/health
-curl -fsS http://127.0.0.1:8000/predict \
+curl -fsS 'http://127.0.0.1:8000/predict?explain=true' \
   -H 'Content-Type: application/json' \
   --data-binary @examples/customer.json
 ```
 
-Use the returned `prediction_id` when the actual outcome is known.
+The request uses the 18 fields in the example and the original IBM column names. Legacy payloads may include `gender`, which is discarded. `SeniorCitizen` is an integer 0 or 1 and `tenure` is an integer number of months. The charge fields are numbers, with `null` accepted for `TotalCharges`. Tenure and charge values range from 0 through 1,000,000,000. See the [accepted categorical values](churn/features.py).
+
+TreeSHAP adds positive and negative contributions to a baseline in log-odds. Positive values raise the model's churn score. The API groups one-hot contributions under their originating fields and sorts them by magnitude. Applying the logistic function to the sum recovers the returned churn probability. The report also includes mean absolute SHAP contributions over the holdout for the development model.
+
+## Record the outcome and inspect monitoring
 
 ```bash
 prediction_id='paste-the-returned-prediction-id'
@@ -62,13 +86,6 @@ curl -fsS -X PUT "http://127.0.0.1:8000/predictions/${prediction_id}/outcome" \
 curl -fsS 'http://127.0.0.1:8000/monitoring?days=30'
 ```
 
-Requests use the 19 fields shown in the example with their original IBM column names. `SeniorCitizen` is an integer 0 or 1. `tenure` is an integer number of months. The two charge fields are numbers, and `TotalCharges` also accepts `null`. Tenure and charge values range from 0 through 1,000,000,000. Categorical values use the [IBM vocabulary](churn/features.py). Resubmitting the same confirmed outcome succeeds. A conflicting outcome returns HTTP 409.
+SQLite stores prediction IDs, timestamps, model version, probability, decision, and actual outcome when available. Score drift uses ten probability bins and requires 30 predictions. Precision, recall, and ROC-AUC require 30 confirmed outcomes in the window and examples of both classes. The evaluation reference comes from the model fitted on the 80% development split. Refitting on all rows can shift the score distribution.
 
-## Monitoring
-
-SQLite stores each prediction ID, timestamp, model version, score, class, and any reported outcome. The monitoring window uses prediction timestamps and accepts 1–365 days. The report includes the mean score and predicted churn rate for the active model version.
-
-- **Score drift** measures how different the recent probability distribution is from the holdout distribution across ten score bins. Total variation ranges from 0 for identical distributions to 1 for disjoint distributions. It becomes available after 30 predictions.
-- **Observed performance** reports precision, recall, ROC-AUC, and their differences from the holdout once 30 predictions in the window have confirmed outcomes and both classes are present. The report includes the labeled count so outcome coverage can be checked.
-
-Set `CHURN_MODEL_PATH` or `CHURN_DB_PATH` to override the default model file or `instance/predictions.sqlite3` log. Restart Flask after retraining to load the new model version.
+Set `CHURN_MODEL_PATH` or `CHURN_DB_PATH` to override the packaged model path or default database at `instance/predictions.sqlite3`. Restart Flask after retraining to load the updated model and cutoff.
