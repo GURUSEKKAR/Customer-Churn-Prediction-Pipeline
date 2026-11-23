@@ -1,21 +1,56 @@
 """Flask REST API for churn predictions, actual outcomes, and monitoring."""
 
+import json
 import os
 from pathlib import Path
 from uuid import UUID, uuid4
 
 import joblib
 import pandas as pd
-from flask import Flask, abort, jsonify, request
+from flask import Flask, abort, jsonify, render_template, request
 from werkzeug.exceptions import HTTPException
 
 from churn.explain import ChurnExplainer
-from churn.features import RAW_FEATURES, feature_source_hash, validate_customer
+from churn.features import (
+    CATEGORICAL_VALUES,
+    MAX_NUMERIC_VALUE,
+    RAW_FEATURES,
+    feature_source_hash,
+    validate_customer,
+)
 from churn.monitor import init_log, log_prediction, monitoring_report, record_outcome
+
+EXAMPLE_PATH = Path(__file__).resolve().parents[1] / "examples" / "customer.json"
+FORM_GROUPS = (
+    ("Account", (
+        ("tenure", "Tenure in months"),
+        ("Contract", "Contract"),
+        ("SeniorCitizen", "Senior citizen"),
+        ("Partner", "Partner"),
+        ("Dependents", "Dependents"),
+    )),
+    ("Services", (
+        ("PhoneService", "Phone service"),
+        ("MultipleLines", "Multiple lines"),
+        ("InternetService", "Internet service"),
+        ("OnlineSecurity", "Online security"),
+        ("OnlineBackup", "Online backup"),
+        ("DeviceProtection", "Device protection"),
+        ("TechSupport", "Tech support"),
+        ("StreamingTV", "Streaming TV"),
+        ("StreamingMovies", "Streaming movies"),
+    )),
+    ("Billing", (
+        ("PaymentMethod", "Payment method"),
+        ("PaperlessBilling", "Paperless billing"),
+        ("MonthlyCharges", "Monthly charges"),
+        ("TotalCharges", "Total charges"),
+    )),
+)
 
 
 def create_app() -> Flask:
-    app = Flask(__name__, static_folder=None)
+    app = Flask(__name__)
     app.config["MAX_CONTENT_LENGTH"] = 16 * 1024
     model_path = Path(os.environ.get("CHURN_MODEL_PATH", "artifacts/churn_model.joblib"))
     log_path = Path(os.environ.get("CHURN_DB_PATH", "instance/predictions.sqlite3"))
@@ -38,6 +73,18 @@ def create_app() -> Flask:
         response.set_data(app.json.dumps({"error": error.description}))
         response.content_type = "application/json"
         return response
+
+    @app.get("/")
+    def dashboard():
+        return render_template(
+            "dashboard.html",
+            groups=FORM_GROUPS,
+            choices={**CATEGORICAL_VALUES, "SeniorCitizen": {0: "No", 1: "Yes"}},
+            example=json.loads(EXAMPLE_PATH.read_text(encoding="utf-8")),
+            max_numeric_value=MAX_NUMERIC_VALUE,
+            model_name=report["selected_model"].replace("_", " ").title(),
+            cutoff=f"{threshold:.1%}",
+        )
 
     @app.get("/health")
     def health():

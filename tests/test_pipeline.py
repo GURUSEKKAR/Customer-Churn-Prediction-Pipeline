@@ -1,6 +1,7 @@
 import json
 import math
 import os
+import re
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -10,7 +11,7 @@ import joblib
 import pandas as pd
 
 from churn.api import create_app
-from churn.features import engineer_features, validate_customer
+from churn.features import RAW_FEATURES, engineer_features, validate_customer
 from churn.metrics import cutoff_metrics, ranking_metrics
 from churn.threshold import choose_threshold
 
@@ -52,6 +53,23 @@ class FeatureTests(unittest.TestCase):
 
 
 class PackagedPipelineTests(unittest.TestCase):
+    def test_browser_dashboard_serves_the_current_input_schema(self):
+        with TemporaryDirectory() as folder:
+            with patch.dict(os.environ, {"CHURN_DB_PATH": str(Path(folder) / "test.sqlite3")}):
+                client = create_app().test_client()
+            page = client.get("/")
+            self.assertEqual(page.status_code, 200)
+            self.assertEqual(page.mimetype, "text/html")
+            markup = page.get_data(as_text=True)
+            self.assertEqual(
+                set(re.findall(r'<(?:input|select)\b[^>]*\bname="([^"]+)"', markup)),
+                set(RAW_FEATURES),
+            )
+            self.assertIn('data-predict-url="/predict?explain=true"', markup)
+            for path in ("/static/dashboard.css", "/static/dashboard.js"):
+                with client.get(path, buffered=True) as asset:
+                    self.assertEqual(asset.status_code, 200)
+
     def test_report_tracks_evaluation_and_full_data_refit(self):
         bundle = joblib.load("artifacts/churn_model.joblib")
         report = bundle["report"]

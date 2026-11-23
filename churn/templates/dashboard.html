@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Score a customer for churn and inspect the features contributing to the prediction.">
+  <title>Customer churn predictor</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+  <script defer src="{{ url_for('static', filename='dashboard.js') }}"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="{{ url_for('dashboard') }}">Churn Predictor</a>
+      <nav aria-label="Dashboard views">
+        <button type="button" class="nav-button" data-view="prediction" aria-controls="prediction-view" aria-pressed="true">Predict</button>
+        <button type="button" class="nav-button" data-view="monitoring" aria-controls="monitoring-view" aria-pressed="false">Monitoring</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section id="prediction-view">
+      <div class="page-heading">
+        <div>
+          <h1>Customer churn</h1>
+          <p>Edit the example profile to estimate a customer's churn risk.</p>
+        </div>
+        <p class="model-label">{{ model_name }}</p>
+      </div>
+
+      <div class="prediction-grid">
+        <form id="customer-form" class="card" data-predict-url="{{ url_for('predict', explain='true') }}">
+          <div class="form-heading">
+            <h2>Customer profile</h2>
+            <button class="button button-secondary" type="reset">Reset example</button>
+          </div>
+          {% for title, fields in groups %}
+          <fieldset>
+            <legend>{{ title }}</legend>
+            <div class="field-grid">
+              {% for name, label in fields %}
+              <div class="field">
+                <label for="{{ name }}">{{ label }}</label>
+                {% if name in choices %}
+                <select id="{{ name }}" name="{{ name }}" required{% if name == 'SeniorCitizen' %} data-number{% endif %}>
+                  {% for value in choices[name] %}
+                  <option value="{{ value }}"{% if value == example[name] %} selected{% endif %}>{{ choices[name][value] if name == 'SeniorCitizen' else value }}</option>
+                  {% endfor %}
+                </select>
+                {% else %}
+                <input id="{{ name }}" name="{{ name }}" type="number" min="0" max="{{ max_numeric_value }}"
+                       step="{{ '1' if name == 'tenure' else '0.01' }}" value="{{ '' if example[name] is none else example[name] }}"
+                       {% if name == 'TotalCharges' %}aria-describedby="total-hint"{% else %}required{% endif %}>
+                {% if name == 'TotalCharges' %}<small id="total-hint">Leave blank if unknown</small>{% endif %}
+                {% endif %}
+              </div>
+              {% endfor %}
+            </div>
+          </fieldset>
+          {% endfor %}
+          <div class="form-actions">
+            <p id="prediction-error" class="error" role="alert" hidden></p>
+            <button class="button button-primary" type="submit">Run prediction</button>
+          </div>
+        </form>
+
+        <aside class="card result-card" aria-labelledby="result-title">
+          <h2 id="result-title" tabindex="-1">Prediction</h2>
+          <p id="result-status" class="muted" role="status">Run a prediction to see the score and its strongest factors.</p>
+          <div id="score-result" hidden>
+            <div class="score-line">
+              <span id="probability" class="score-value"></span>
+              <span id="decision" class="decision"></span>
+            </div>
+            <p class="muted score-label">Churn probability</p>
+            <progress id="probability-meter" max="1" aria-label="Churn probability"></progress>
+            <div id="factors" hidden>
+              <h3>Top factors</h3>
+              <ul id="factor-list"></ul>
+              <p class="muted factor-note">SHAP contributions in log-odds.</p>
+            </div>
+          </div>
+          <dl class="cutoff">
+            <div><dt>Decision cutoff</dt><dd id="cutoff-value">{{ cutoff }}</dd></div>
+          </dl>
+        </aside>
+      </div>
+    </section>
+
+    <section id="monitoring-view" data-monitor-url="{{ url_for('monitoring', days=30) }}" hidden>
+      <div class="page-heading">
+        <div>
+          <h1>Monitoring</h1>
+          <p>Predictions for the active model over the last 30 days.</p>
+        </div>
+        <button id="refresh-monitoring" class="button button-secondary" type="button">Refresh</button>
+      </div>
+      <p id="monitor-status" class="muted" role="status"></p>
+      <div id="monitor-metrics" class="monitor-grid" hidden>
+        <dl class="card metric"><dt>Predictions</dt><dd id="prediction-count"></dd></dl>
+        <dl class="card metric"><dt>Confirmed outcomes</dt><dd id="outcome-count"></dd></dl>
+        <dl class="card metric"><dt>Flagged for outreach</dt><dd id="flagged-rate"></dd></dl>
+        <dl class="card metric"><dt>Score drift</dt><dd id="drift-value"></dd></dl>
+      </div>
+    </section>
+    <noscript><p class="error">Enable JavaScript to submit predictions and view monitoring.</p></noscript>
+  </main>
+</body>
+</html>

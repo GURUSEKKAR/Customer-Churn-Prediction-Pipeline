@@ -16,6 +16,8 @@ python -m flask --app churn.api run --port 8000
 
 The package includes the fitted model in `artifacts/churn_model.joblib` and its evaluation in [metrics.json](artifacts/metrics.json). The artifact records the library versions and the preprocessing source checksum.
 
+Open [the dashboard](http://127.0.0.1:8000/) to edit the example profile, run a prediction, and see which features contributed to the score. The Monitoring view displays recent prediction totals and confirmed outcomes. On Render, open the service's base URL to use the same dashboard.
+
 ## Reproduce training and choose a cutoff
 
 ```bash
