@@ -145,13 +145,20 @@ def train(
 
     boosting_scores = development_model.predict_proba(x_test)[:, 1]
     threshold_comparison = {}
+    contract = x_test["Contract"].fillna("Unknown").astype(str).str.strip().replace("", "Unknown")
     for name, cutoff in cutoffs.items():
         predictions = (boosting_scores >= cutoff).astype(int)
         threshold_comparison[name] = {
             "cutoff": cutoff,
             "out_of_fold": cutoff_metrics(y_train, oof_scores >= cutoff, fp_cost, fn_cost),
             "holdout": cutoff_metrics(y_test, predictions, fp_cost, fn_cost),
+            "holdout_by_contract": {},
         }
+        for category in sorted(contract.unique()):
+            rows = contract.eq(category).to_numpy()
+            threshold_comparison[name]["holdout_by_contract"][category] = cutoff_metrics(
+                y_test.iloc[rows], predictions[rows], fp_cost, fn_cost
+            )
 
     for name, model in fitted_models.items():
         # Compare classifiers at a common fixed cutoff. The policy table above
