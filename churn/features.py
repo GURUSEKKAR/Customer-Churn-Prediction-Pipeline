@@ -17,7 +17,6 @@ INTERNET_ADD_ONS = (
     "StreamingMovies",
 )
 CATEGORICAL_VALUES = {
-    "gender": ("Female", "Male"),
     "Partner": YES_NO,
     "Dependents": YES_NO,
     "PhoneService": YES_NO,
@@ -47,7 +46,7 @@ def validate_customer(payload: object) -> dict:
     missing = sorted(set(RAW_FEATURES) - payload.keys())
     if missing:
         raise ValueError(f"Missing fields: {', '.join(missing)}.")
-    extra = sorted(payload.keys() - set(RAW_FEATURES))
+    extra = sorted(payload.keys() - set(RAW_FEATURES) - {"gender"})
     if extra:
         raise ValueError(f"Unexpected fields: {', '.join(extra)}.")
 
