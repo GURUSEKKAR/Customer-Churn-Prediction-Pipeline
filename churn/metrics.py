@@ -61,6 +61,18 @@ def ranking_metrics(actual, probabilities) -> dict:
     scores = np.asarray(probabilities, dtype=float)
     top_count = math.ceil(0.1 * len(labels))
     top = np.argsort(-scores, kind="stable")[:top_count]
+    # For equal scores exactly at a bucket boundary, match numpy.histogram.
+    bucket = np.minimum(np.searchsorted(SCORE_BINS, scores, side="right") - 1, 9)
+    calibration = []
+    for index, (lower, upper) in enumerate(zip(SCORE_BINS, SCORE_BINS[1:])):
+        rows = bucket == index
+        calibration.append({
+            "lower_probability": float(lower),
+            "upper_probability": float(upper),
+            "count": int(rows.sum()),
+            "mean_probability": float(scores[rows].mean()) if rows.any() else None,
+            "observed_churn_rate": float(labels[rows].mean()) if rows.any() else None,
+        })
     return {
         "roc_auc": float(roc_auc_score(labels, scores)),
         "average_precision": float(average_precision_score(labels, scores)),
@@ -70,4 +82,5 @@ def ranking_metrics(actual, probabilities) -> dict:
             "churn_rate": float(labels[top].mean()),
             "lift": float(labels[top].mean() / labels.mean()),
         },
+        "calibration_bins": calibration,
     }
